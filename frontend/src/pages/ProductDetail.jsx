@@ -14,6 +14,7 @@ export default function ProductDetail() {
     const [product, setProduct] = useState(null);
     const [loading, setLoading] = useState(true);
     const [selectedSize, setSelectedSize] = useState(null);
+    const [selectedColor, setSelectedColor] = useState(null);
     const [quantity, setQuantity] = useState(1);
 
     useEffect(() => {
@@ -25,9 +26,9 @@ export default function ProductDetail() {
         try {
             const { data } = await productsAPI.getById(id);
             setProduct(data);
-            if (data.sizes?.length > 0) {
-                setSelectedSize(data.sizes[0]);
-            }
+            if (data.sizes?.length > 0) setSelectedSize(data.sizes[0]);
+            // No auto-seleccionar color para obligar al usuario a elegir
+            // if (data.colors?.length > 0) setSelectedColor(data.colors[0]);
         } catch (err) {
             console.error('Error cargando producto:', err);
             navigate('/'); // Redirigir si falla (o mostrar 404)
@@ -38,8 +39,15 @@ export default function ProductDetail() {
 
     const handleAddToCart = () => {
         if (!product) return;
+
+        if (product.colors?.length > 0 && !selectedColor) {
+            alert('Por favor elegí un color');
+            return;
+        }
+
         const sizeToAdd = selectedSize || 'Único';
-        addItem(product, sizeToAdd, quantity);
+        const colorToAdd = selectedColor || null;
+        addItem(product, sizeToAdd, quantity, colorToAdd);
         // Opcional: Mostrar feedback o abrir carrito
     };
 
@@ -96,7 +104,30 @@ export default function ProductDetail() {
                                     </div>
                                 )}
 
-                                {/* Cantidad */}
+                                {/* Cantidad y Color */}
+                                {product.colors?.length > 0 && (
+                                    <div className="meta-group">
+                                        <label>Color</label>
+                                        <div className="color-selector" style={{ display: 'flex', gap: '10px' }}>
+                                            {product.colors.map(color => (
+                                                <button
+                                                    key={color}
+                                                    className={`color-btn ${selectedColor === color ? 'active' : ''}`}
+                                                    onClick={() => setSelectedColor(color)}
+                                                    title={color}
+                                                    style={{
+                                                        width: '32px', height: '32px', borderRadius: '50%',
+                                                        background: color, border: selectedColor === color ? '2px solid var(--accent)' : '1px solid #ddd',
+                                                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)', cursor: 'pointer',
+                                                        transform: selectedColor === color ? 'scale(1.1)' : 'scale(1)',
+                                                        transition: 'transform 0.2s ease'
+                                                    }}
+                                                />
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
                                 <div className="meta-group">
                                     <label>Cantidad</label>
                                     <div className="quantity-selector">

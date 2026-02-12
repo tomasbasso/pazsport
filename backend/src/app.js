@@ -2,7 +2,6 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const { getPool } = require('./config/database');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -48,11 +47,8 @@ app.use((err, req, res, next) => {
 });
 
 // Iniciar servidor
-async function start() {
+function start() {
     try {
-        // Conectar a la base de datos
-        await getPool();
-
         app.listen(PORT, () => {
             console.log(`🚀 PazSport API corriendo en http://localhost:${PORT}`);
             console.log(`📦 Endpoints disponibles:`);

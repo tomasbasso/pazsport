@@ -26,33 +26,33 @@ export function CartProvider({ children }) {
         }
     }, []);
 
-    const addItem = useCallback((product, size) => {
+    const addItem = useCallback((product, size, quantity = 1, color = null) => {
         setItems(prev => {
-            const existing = prev.find(i => i.product.id === product.id && i.size === size);
+            const existing = prev.find(i => i.product.id === product.id && i.size === size && i.color === color);
             if (existing) {
                 return prev.map(i =>
-                    i.product.id === product.id && i.size === size
-                        ? { ...i, quantity: i.quantity + 1 }
+                    i.product.id === product.id && i.size === size && i.color === color
+                        ? { ...i, quantity: i.quantity + quantity }
                         : i
                 );
             }
-            return [...prev, { product, size, quantity: 1 }];
+            return [...prev, { product, size, color, quantity }];
         });
         setIsOpen(true);
     }, []);
 
-    const removeItem = useCallback((productId, size) => {
-        setItems(prev => prev.filter(i => !(i.product.id === productId && i.size === size)));
+    const removeItem = useCallback((productId, size, color) => {
+        setItems(prev => prev.filter(i => !(i.product.id === productId && i.size === size && i.color === color)));
     }, []);
 
-    const updateQuantity = useCallback((productId, size, quantity) => {
+    const updateQuantity = useCallback((productId, size, color, quantity) => {
         if (quantity <= 0) {
-            removeItem(productId, size);
+            removeItem(productId, size, color);
             return;
         }
         setItems(prev =>
             prev.map(i =>
-                i.product.id === productId && i.size === size
+                i.product.id === productId && i.size === size && i.color === color
                     ? { ...i, quantity }
                     : i
             )
@@ -80,7 +80,8 @@ export function CartProvider({ children }) {
         message += '\n*Productos:*\n';
 
         items.forEach((item, index) => {
-            message += `${index + 1}. ${item.product.name} - Talle ${item.size} x${item.quantity} - $${(item.product.price * item.quantity).toLocaleString('es-AR')}\n`;
+            const colorText = item.color ? ` - Color: ${item.color}` : '';
+            message += `${index + 1}. ${item.product.name} - Talle ${item.size}${colorText} x${item.quantity} - $${(item.product.price * item.quantity).toLocaleString('es-AR')}\n`;
         });
 
         if (shippingCost > 0) {

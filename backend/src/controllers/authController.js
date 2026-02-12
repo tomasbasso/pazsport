@@ -1,6 +1,6 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { sql, getPool } = require('../config/database');
+const db = require('../config/database');
 
 // POST /api/auth/login
 async function login(req, res) {
@@ -11,12 +11,8 @@ async function login(req, res) {
             return res.status(400).json({ error: 'Email y contraseña son requeridos' });
         }
 
-        const pool = await getPool();
-        const result = await pool.request()
-            .input('email', sql.NVarChar, email)
-            .query('SELECT * FROM Users WHERE email = @email');
-
-        const user = result.recordset[0];
+        const result = await db.query('SELECT * FROM "Users" WHERE email = $1', [email]);
+        const user = result.rows[0];
 
         if (!user) {
             return res.status(401).json({ error: 'Credenciales inválidas' });
@@ -51,12 +47,9 @@ async function login(req, res) {
 // GET /api/auth/me - Obtener usuario actual
 async function getMe(req, res) {
     try {
-        const pool = await getPool();
-        const result = await pool.request()
-            .input('id', sql.Int, req.user.id)
-            .query('SELECT id, email, name, role FROM Users WHERE id = @id');
+        const result = await db.query('SELECT id, email, name, role FROM "Users" WHERE id = $1', [req.user.id]);
+        const user = result.rows[0];
 
-        const user = result.recordset[0];
         if (!user) {
             return res.status(404).json({ error: 'Usuario no encontrado' });
         }

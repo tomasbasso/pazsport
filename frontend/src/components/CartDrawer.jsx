@@ -53,7 +53,19 @@ export default function CartDrawer() {
                                     )}
                                     <div className="cart-item-info">
                                         <div className="cart-item-name">{item.product.name}</div>
-                                        <div className="cart-item-size">Talle: {item.size}</div>
+                                        <div className="cart-item-size">
+                                            {item.size !== 'Único' && `Talle: ${item.size}`}
+                                            {item.size !== 'Único' && item.color && ' | '}
+                                            {item.color && (
+                                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                                    Color:
+                                                    <span style={{
+                                                        width: '12px', height: '12px', borderRadius: '50%',
+                                                        background: item.color, border: '1px solid #ccc', display: 'inline-block'
+                                                    }} title={item.color}></span>
+                                                </span>
+                                            )}
+                                        </div>
                                         <div className="cart-item-price">
                                             ${(item.product.price * item.quantity).toLocaleString('es-AR')}
                                         </div>

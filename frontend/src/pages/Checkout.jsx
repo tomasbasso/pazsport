@@ -126,7 +126,19 @@ export default function Checkout() {
                                         </div>
                                         <div className="summary-item-details">
                                             <h4>{item.product.name}</h4>
-                                            <p className="size-text">Talle: {item.size}</p>
+                                            <p className="size-text">
+                                                {item.size !== 'Único' && `Talle: ${item.size}`}
+                                                {item.size !== 'Único' && item.color && ' | '}
+                                                {item.color && (
+                                                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                                        Color:
+                                                        <span style={{
+                                                            width: '12px', height: '12px', borderRadius: '50%',
+                                                            background: item.color, border: '1px solid #ccc', display: 'inline-block'
+                                                        }} title={item.color}></span>
+                                                    </span>
+                                                )}
+                                            </p>
                                             <div className="summary-qty-controls">
                                                 <button onClick={() => updateQuantity(item.product.id, item.size, item.quantity - 1)}><FiMinus /></button>
                                                 <span>{item.quantity}</span>

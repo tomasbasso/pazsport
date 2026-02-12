@@ -1,4 +1,4 @@
-const { sql, getPool } = require('../config/database');
+const db = require('../config/database');
 const path = require('path');
 const fs = require('fs');
 
@@ -6,34 +6,33 @@ const fs = require('fs');
 async function getAll(req, res) {
     try {
         const { categoryId, active } = req.query;
-        const pool = await getPool();
-        const request = pool.request();
-
         let query = `
-      SELECT p.*, c.name as categoryName 
-      FROM Products p 
-      LEFT JOIN Categories c ON p.categoryId = c.id
-      WHERE 1=1
-    `;
+            SELECT p.*, c.name as "categoryName" 
+            FROM "Products" p 
+            LEFT JOIN "Categories" c ON p."categoryId" = c.id
+            WHERE 1=1
+        `;
+        const params = [];
 
         if (categoryId) {
-            query += ' AND p.categoryId = @categoryId';
-            request.input('categoryId', sql.Int, categoryId);
+            params.push(categoryId);
+            query += ` AND p."categoryId" = $${params.length}`;
         }
 
         if (active !== undefined) {
-            query += ' AND p.isActive = @active';
-            request.input('active', sql.Bit, active === 'true' ? 1 : 0);
+            params.push(active === 'true');
+            query += ` AND p."isActive" = $${params.length}`;
         }
 
-        query += ' ORDER BY p.createdAt DESC';
+        query += ' ORDER BY p."createdAt" DESC';
 
-        const result = await request.query(query);
+        const result = await db.query(query, params);
 
-        // Parsear sizes de JSON string a array
-        const products = result.recordset.map(p => ({
+        // Parsear sizes y colors de JSON string a array
+        const products = result.rows.map(p => ({
             ...p,
-            sizes: p.sizes ? JSON.parse(p.sizes) : []
+            sizes: p.sizes ? JSON.parse(p.sizes) : [],
+            colors: p.colors ? JSON.parse(p.colors) : []
         }));
 
         res.json(products);
@@ -46,22 +45,21 @@ async function getAll(req, res) {
 // GET /api/products/:id
 async function getById(req, res) {
     try {
-        const pool = await getPool();
-        const result = await pool.request()
-            .input('id', sql.Int, req.params.id)
-            .query(`
-        SELECT p.*, c.name as categoryName 
-        FROM Products p 
-        LEFT JOIN Categories c ON p.categoryId = c.id
-        WHERE p.id = @id
-      `);
+        const query = `
+            SELECT p.*, c.name as "categoryName" 
+            FROM "Products" p 
+            LEFT JOIN "Categories" c ON p."categoryId" = c.id
+            WHERE p.id = $1
+        `;
+        const result = await db.query(query, [req.params.id]);
 
-        if (result.recordset.length === 0) {
+        if (result.rows.length === 0) {
             return res.status(404).json({ error: 'Producto no encontrado' });
         }
 
-        const product = result.recordset[0];
+        const product = result.rows[0];
         product.sizes = product.sizes ? JSON.parse(product.sizes) : [];
+        product.colors = product.colors ? JSON.parse(product.colors) : [];
 
         res.json(product);
     } catch (err) {
@@ -73,7 +71,7 @@ async function getById(req, res) {
 // POST /api/products
 async function create(req, res) {
     try {
-        const { name, description, price, categoryId, sizes, stock, isActive } = req.body;
+        const { name, description, price, categoryId, sizes, colors, stock, isActive } = req.body;
         const image = req.file ? `/uploads/${req.file.filename}` : null;
 
         if (!name || !price || !categoryId) {
@@ -81,25 +79,29 @@ async function create(req, res) {
         }
 
         const sizesJson = Array.isArray(sizes) ? JSON.stringify(sizes) : sizes || '[]';
+        const colorsJson = Array.isArray(colors) ? JSON.stringify(colors) : colors || '[]';
 
-        const pool = await getPool();
-        const result = await pool.request()
-            .input('name', sql.NVarChar, name)
-            .input('description', sql.NVarChar, description || null)
-            .input('price', sql.Decimal(10, 2), price)
-            .input('image', sql.NVarChar, image)
-            .input('categoryId', sql.Int, categoryId)
-            .input('sizes', sql.NVarChar, sizesJson)
-            .input('stock', sql.Int, stock || 0)
-            .input('isActive', sql.Bit, isActive !== undefined ? isActive : 1)
-            .query(`
-        INSERT INTO Products (name, description, price, image, categoryId, sizes, stock, isActive)
-        OUTPUT INSERTED.*
-        VALUES (@name, @description, @price, @image, @categoryId, @sizes, @stock, @isActive)
-      `);
+        const query = `
+            INSERT INTO "Products" (name, description, price, image, "categoryId", sizes, colors, stock, "isActive")
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            RETURNING *
+        `;
+        const values = [
+            name,
+            description || null,
+            price,
+            image,
+            categoryId,
+            sizesJson,
+            colorsJson,
+            stock || 0,
+            isActive !== undefined ? isActive : true
+        ];
 
-        const product = result.recordset[0];
+        const result = await db.query(query, values);
+        const product = result.rows[0];
         product.sizes = product.sizes ? JSON.parse(product.sizes) : [];
+        product.colors = product.colors ? JSON.parse(product.colors) : [];
 
         res.status(201).json(product);
     } catch (err) {
@@ -111,70 +113,72 @@ async function create(req, res) {
 // PUT /api/products/:id
 async function update(req, res) {
     try {
-        const { name, description, price, categoryId, sizes, stock, isActive } = req.body;
+        const { name, description, price, categoryId, sizes, colors, stock, isActive } = req.body;
         const image = req.file ? `/uploads/${req.file.filename}` : undefined;
-
-        const pool = await getPool();
 
         // Si se sube nueva imagen, eliminar la vieja
         if (image) {
-            const current = await pool.request()
-                .input('id', sql.Int, req.params.id)
-                .query('SELECT image FROM Products WHERE id = @id');
-
-            if (current.recordset[0]?.image) {
-                const oldPath = path.join(__dirname, '../../', current.recordset[0].image);
+            const currentResult = await db.query('SELECT image FROM "Products" WHERE id = $1', [req.params.id]);
+            if (currentResult.rows[0]?.image) {
+                const oldPath = path.join(__dirname, '../../', currentResult.rows[0].image);
                 if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
             }
         }
 
-        let query = 'UPDATE Products SET updatedAt = GETDATE()';
-        const request = pool.request().input('id', sql.Int, req.params.id);
+        let query = 'UPDATE "Products" SET "updatedAt" = NOW()';
+        const params = [req.params.id]; // $1 es el ID
+        let paramIndex = 2; // Empezamos desde $2
 
         if (name !== undefined) {
-            query += ', name = @name';
-            request.input('name', sql.NVarChar, name);
+            query += `, name = $${paramIndex++}`;
+            params.push(name);
         }
         if (description !== undefined) {
-            query += ', description = @description';
-            request.input('description', sql.NVarChar, description);
+            query += `, description = $${paramIndex++}`;
+            params.push(description);
         }
         if (price !== undefined) {
-            query += ', price = @price';
-            request.input('price', sql.Decimal(10, 2), price);
+            query += `, price = $${paramIndex++}`;
+            params.push(price);
         }
         if (image !== undefined) {
-            query += ', image = @image';
-            request.input('image', sql.NVarChar, image);
+            query += `, image = $${paramIndex++}`;
+            params.push(image);
         }
         if (categoryId !== undefined) {
-            query += ', categoryId = @categoryId';
-            request.input('categoryId', sql.Int, categoryId);
+            query += `, "categoryId" = $${paramIndex++}`;
+            params.push(categoryId);
         }
         if (sizes !== undefined) {
             const sizesJson = Array.isArray(sizes) ? JSON.stringify(sizes) : sizes;
-            query += ', sizes = @sizes';
-            request.input('sizes', sql.NVarChar, sizesJson);
+            query += `, sizes = $${paramIndex++}`;
+            params.push(sizesJson);
+        }
+        if (colors !== undefined) {
+            const colorsJson = Array.isArray(colors) ? JSON.stringify(colors) : colors;
+            query += `, colors = $${paramIndex++}`;
+            params.push(colorsJson);
         }
         if (stock !== undefined) {
-            query += ', stock = @stock';
-            request.input('stock', sql.Int, stock);
+            query += `, stock = $${paramIndex++}`;
+            params.push(stock);
         }
         if (isActive !== undefined) {
-            query += ', isActive = @isActive';
-            request.input('isActive', sql.Bit, isActive);
+            query += `, "isActive" = $${paramIndex++}`;
+            params.push(isActive);
         }
 
-        query += ' OUTPUT INSERTED.* WHERE id = @id';
+        query += ' WHERE id = $1 RETURNING *';
 
-        const result = await request.query(query);
+        const result = await db.query(query, params);
 
-        if (result.recordset.length === 0) {
+        if (result.rows.length === 0) {
             return res.status(404).json({ error: 'Producto no encontrado' });
         }
 
-        const product = result.recordset[0];
+        const product = result.rows[0];
         product.sizes = product.sizes ? JSON.parse(product.sizes) : [];
+        product.colors = product.colors ? JSON.parse(product.colors) : [];
 
         res.json(product);
     } catch (err) {
@@ -186,23 +190,17 @@ async function update(req, res) {
 // DELETE /api/products/:id
 async function remove(req, res) {
     try {
-        const pool = await getPool();
-
         // Eliminar imagen si existe
-        const current = await pool.request()
-            .input('id', sql.Int, req.params.id)
-            .query('SELECT image FROM Products WHERE id = @id');
+        const currentResult = await db.query('SELECT image FROM "Products" WHERE id = $1', [req.params.id]);
 
-        if (current.recordset[0]?.image) {
-            const imgPath = path.join(__dirname, '../../', current.recordset[0].image);
+        if (currentResult.rows[0]?.image) {
+            const imgPath = path.join(__dirname, '../../', currentResult.rows[0].image);
             if (fs.existsSync(imgPath)) fs.unlinkSync(imgPath);
         }
 
-        const result = await pool.request()
-            .input('id2', sql.Int, req.params.id)
-            .query('DELETE FROM Products WHERE id = @id2');
+        const result = await db.query('DELETE FROM "Products" WHERE id = $1', [req.params.id]);
 
-        if (result.rowsAffected[0] === 0) {
+        if (result.rowCount === 0) {
             return res.status(404).json({ error: 'Producto no encontrado' });
         }
 

@@ -10,7 +10,7 @@ export default function AdminProducts() {
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [editing, setEditing] = useState(null);
-    const [form, setForm] = useState({ name: '', description: '', price: '', categoryId: '', sizes: '', stock: '', isActive: true });
+    const [form, setForm] = useState({ name: '', description: '', price: '', categoryId: '', sizes: '', colors: '', stock: '', isActive: true });
     const [imageFile, setImageFile] = useState(null);
 
     useEffect(() => { loadData(); }, []);
@@ -32,7 +32,7 @@ export default function AdminProducts() {
 
     function openCreate() {
         setEditing(null);
-        setForm({ name: '', description: '', price: '', categoryId: categories[0]?.id || '', sizes: 'S,M,L,XL', stock: '0', isActive: true });
+        setForm({ name: '', description: '', price: '', categoryId: categories[0]?.id || '', sizes: 'S,M,L,XL', colors: '', stock: '0', isActive: true });
         setImageFile(null);
         setShowModal(true);
     }
@@ -45,6 +45,7 @@ export default function AdminProducts() {
             price: product.price.toString(),
             categoryId: product.categoryId.toString(),
             sizes: product.sizes?.join(',') || '',
+            colors: product.colors?.join(',') || '',
             stock: product.stock.toString(),
             isActive: product.isActive,
         });
@@ -60,6 +61,7 @@ export default function AdminProducts() {
         formData.append('price', form.price);
         formData.append('categoryId', form.categoryId);
         formData.append('sizes', JSON.stringify(form.sizes.split(',').map(s => s.trim()).filter(Boolean)));
+        formData.append('colors', JSON.stringify(form.colors.split(',').map(c => c.trim()).filter(Boolean)));
         formData.append('stock', form.stock);
         formData.append('isActive', form.isActive);
         if (imageFile) formData.append('image', imageFile);
@@ -176,6 +178,19 @@ export default function AdminProducts() {
                             <div className="form-group">
                                 <label>Talles (separados por coma)</label>
                                 <input value={form.sizes} onChange={e => setForm({ ...form, sizes: e.target.value })} placeholder="S,M,L,XL" />
+                            </div>
+                            <div className="form-group">
+                                <label>Colores (Hex o Nombre, separados por coma)</label>
+                                <input
+                                    value={form.colors}
+                                    onChange={e => setForm({ ...form, colors: e.target.value })}
+                                    placeholder="#000000, Blanco, Rojo, #FF5733"
+                                />
+                                <div style={{ display: 'flex', gap: '5px', marginTop: '5px' }}>
+                                    {form.colors.split(',').map(c => c.trim()).filter(Boolean).map((c, i) => (
+                                        <div key={i} style={{ width: '20px', height: '20px', borderRadius: '50%', background: c, border: '1px solid #ccc' }} title={c}></div>
+                                    ))}
+                                </div>
                             </div>
                             <div className="form-group">
                                 <label>Imagen</label>
