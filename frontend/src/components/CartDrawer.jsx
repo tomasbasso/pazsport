@@ -1,19 +1,20 @@
-import { FiX, FiMinus, FiPlus, FiShoppingBag } from 'react-icons/fi';
-import { FaWhatsapp } from 'react-icons/fa';
+import { FiX, FiMinus, FiPlus, FiShoppingBag, FiArrowRight } from 'react-icons/fi';
 import { useCart } from '../context/CartContext';
+import { useNavigate } from 'react-router-dom';
 
 const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3001';
 
 export default function CartDrawer() {
     const {
         items, isOpen, setIsOpen, removeItem,
-        updateQuantity, totalItems, totalPrice,
-        generateWhatsAppMessage, calculateShipping, shippingCost, zipCode
+        updateQuantity, totalItems, totalPrice
     } = useCart();
 
-    const handleCheckout = () => {
-        const url = generateWhatsAppMessage();
-        window.open(url, '_blank');
+    const navigate = useNavigate();
+
+    const handleGoToCheckout = () => {
+        setIsOpen(false);
+        navigate('/checkout');
     };
 
     return (
@@ -80,71 +81,42 @@ export default function CartDrawer() {
 
                 {items.length > 0 && (
                     <div className="cart-footer">
-                        {/* Calculadora de Envío */}
-                        <div className="shipping-calculator" style={{ marginBottom: '1.5rem', paddingBottom: '1.5rem', borderBottom: '1px solid var(--border-light)' }}>
-                            <label htmlFor="zipCode" style={{ fontSize: '0.9rem', fontWeight: '600', display: 'block', marginBottom: '8px', color: 'var(--text-secondary)' }}>
-                                Calcular Envío (Ingresá tu CP)
-                            </label>
-                            <div style={{ display: 'flex', gap: '10px', marginBottom: '0.8rem' }}>
-                                <input
-                                    type="number"
-                                    id="zipCode"
-                                    placeholder="Ej: 6313"
-                                    value={zipCode}
-                                    onChange={(e) => calculateShipping(e.target.value)}
-                                    style={{
-                                        padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border)',
-                                        width: '100%', fontSize: '0.95rem', background: 'var(--surface-alt)'
-                                    }}
-                                />
-                            </div>
-                            {zipCode && (
-                                <div style={{
-                                    fontSize: '0.9rem',
-                                    color: shippingCost === 0 ? 'var(--success)' : 'var(--text-primary)',
-                                    padding: '10px',
-                                    background: shippingCost === 0 ? '#e8f8ef' : 'var(--surface-alt)',
-                                    borderRadius: '8px',
-                                    fontWeight: '500',
-                                    display: 'flex', alignItems: 'center', gap: '8px'
-                                }}>
-                                    {shippingCost === 0
-                                        ? (zipCode === '6313' ? '📍 Winifreda: Envío Gratis / Retiro' : 'Consultar opciones')
-                                        : `🚚 Costo de envío: $${shippingCost.toLocaleString('es-AR')}`
-                                    }
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="cart-total" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '10px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', fontSize: '0.95rem', color: 'var(--text-secondary)' }}>
-                                <span>Subtotal</span>
+                        <div className="cart-summary">
+                            <div className="summary-total">
+                                <span>Total (sin envío)</span>
                                 <span>${totalPrice.toLocaleString('es-AR')}</span>
                             </div>
-
-                            {/* Mostrar envío solo si se calculó */}
-                            {shippingCost > 0 && (
-                                <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', fontSize: '0.95rem', color: 'var(--text-secondary)' }}>
-                                    <span>Envío</span>
-                                    <span>${shippingCost.toLocaleString('es-AR')}</span>
-                                </div>
-                            )}
-
-                            <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', fontSize: '1.4rem', fontWeight: '800', borderTop: '1px solid var(--border)', paddingTop: '15px', marginTop: '5px' }}>
-                                <span>Total</span>
-                                <span className="cart-total-price">${(totalPrice + shippingCost).toLocaleString('es-AR')}</span>
-                            </div>
                         </div>
 
-                        <button className="cart-whatsapp-btn" onClick={handleCheckout} style={{ marginTop: '1.5rem' }}>
-                            <FaWhatsapp size={20} /> Enviar Pedido por WhatsApp
+                        <button
+                            className="cart-checkout-btn"
+                            onClick={handleGoToCheckout}
+                        >
+                            Iniciar Compra <FiArrowRight />
                         </button>
-                        <p className="cart-whatsapp-note">
-                            Serás redirigido/a a WhatsApp con el detalle del pedido y los datos de envío.
-                        </p>
                     </div>
                 )}
             </div>
+            <style>{`
+                .cart-footer {
+                    padding: 1.5rem;
+                    background: #fff;
+                    border-top: 1px solid var(--border-light);
+                    display: flex; flex-direction: column; gap: 1.5rem;
+                }
+                .summary-total {
+                    display: flex; justify-content: space-between; align-items: center;
+                    font-size: 1.2rem; font-weight: 700; color: var(--text-primary);
+                }
+                
+                .cart-checkout-btn {
+                    width: 100%; padding: 16px; background: var(--primary); color: white;
+                    border: none; border-radius: 50px; font-size: 1.1rem; font-weight: 600;
+                    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
+                    transition: all 0.3s; box-shadow: 0 4px 15px rgba(235, 122, 169, 0.3);
+                }
+                .cart-checkout-btn:hover { background: var(--primary-dark); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(235, 122, 169, 0.4); }
+            `}</style>
         </>
     );
 }

@@ -7,6 +7,7 @@ export function CartProvider({ children }) {
     const [isOpen, setIsOpen] = useState(false);
     const [shippingCost, setShippingCost] = useState(0);
     const [zipCode, setZipCode] = useState('');
+    const [customer, setCustomer] = useState({ name: '', address: '' });
 
     const calculateShipping = useCallback((zip) => {
         setZipCode(zip);
@@ -67,31 +68,49 @@ export function CartProvider({ children }) {
 
     const generateWhatsAppMessage = useCallback(() => {
         const WHATSAPP_NUMBER = '5492302462479';
-        let message = '🛍️ *Nuevo Pedido - PazSport*\n\n📦 Productos:\n';
+
+        // Emojis retirados por solicitud del usuario para evitar problemas de encoding
+        let message = '*Nuevo Pedido - PazSport*\n\n';
+
+        // Datos del Cliente
+        if (customer.name) message += `*Cliente:* ${customer.name}\n`;
+        if (customer.address) message += `*Dirección:* ${customer.address}\n`;
+        if (zipCode) message += `*CP:* ${zipCode}\n`;
+
+        message += '\n*Productos:*\n';
 
         items.forEach((item, index) => {
             message += `${index + 1}. ${item.product.name} - Talle ${item.size} x${item.quantity} - $${(item.product.price * item.quantity).toLocaleString('es-AR')}\n`;
         });
 
         if (shippingCost > 0) {
-            message += `\n🚚 Envío (CP ${zipCode}): $${shippingCost.toLocaleString('es-AR')}\n`;
+            message += `\nEnvío: $${shippingCost.toLocaleString('es-AR')}\n`;
         } else if (zipCode === '6313') {
-            message += `\n🚚 Retiro en Local / Winifreda (Gratis)\n`;
+            message += `\nRetiro en Local / Winifreda (Gratis)\n`;
         }
 
         const finalTotal = totalPrice + shippingCost;
-        message += `\n💰 *Total Final: $${finalTotal.toLocaleString('es-AR')}*\n\n`;
-        message += '📎 _Adjunto comprobante de transferencia_\n\n¡Gracias! 🙏';
+        message += `\n*Total Final: $${finalTotal.toLocaleString('es-AR')}*\n\n`;
 
+        message += '*Datos de Pago:*\n';
+        message += 'Banco: Mercado Pago\n';
+        message += 'Alias: pazsport\n';
+        message += 'Titular: Maria Paz Maldonado\n';
+        message += 'CUIL: 27-41831394-9\n\n';
+
+        message += '_Adjunto comprobante de transferencia_\n\n¡Gracias!';
+
+        // Ensure proper URL encoding
         const encoded = encodeURIComponent(message);
         return `https://wa.me/${WHATSAPP_NUMBER}?text=${encoded}`;
-    }, [items, totalPrice, shippingCost, zipCode]);
+    }, [items, totalPrice, shippingCost, zipCode, customer]);
 
     return (
         <CartContext.Provider value={{
             items, isOpen, setIsOpen, addItem, removeItem,
             updateQuantity, clearCart, totalItems, totalPrice,
-            generateWhatsAppMessage, calculateShipping, shippingCost, zipCode
+            generateWhatsAppMessage, calculateShipping, shippingCost, zipCode,
+            customer, setCustomer
         }}>
             {children}
         </CartContext.Provider>

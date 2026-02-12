@@ -3,6 +3,7 @@ import { CartProvider } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import CartDrawer from './components/CartDrawer';
+import Checkout from './pages/Checkout';
 import Home from './pages/Home';
 import ProductDetail from './pages/ProductDetail';
 import AdminLogin from './pages/AdminLogin';
@@ -22,6 +23,7 @@ function App() {
                         {/* Public */}
                         <Route path="/" element={<Home />} />
                         <Route path="/product/:id" element={<ProductDetail />} />
+                        <Route path="/checkout" element={<Checkout />} />
 
                         {/* Admin */}
                         <Route path="/admin/login" element={<AdminLogin />} />
