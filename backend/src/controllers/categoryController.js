@@ -33,7 +33,12 @@ async function getById(req, res) {
 async function create(req, res) {
     try {
         const { name, isActive } = req.body;
-        const image = req.file ? `/uploads/${req.file.filename}` : null;
+
+        let image = null;
+        if (req.file) {
+            const b64 = req.file.buffer.toString('base64');
+            image = `data:${req.file.mimetype};base64,${b64}`;
+        }
 
         if (!name) {
             return res.status(400).json({ error: 'El nombre es requerido' });
@@ -58,16 +63,11 @@ async function create(req, res) {
 async function update(req, res) {
     try {
         const { name, isActive } = req.body;
-        const image = req.file ? `/uploads/${req.file.filename}` : undefined;
 
-        // Obtener categoría actual para eliminar imagen vieja si se sube nueva
-        if (image) {
-            const currentResult = await db.query('SELECT image FROM "Categories" WHERE id = $1', [req.params.id]);
-
-            if (currentResult.rows[0]?.image) {
-                const oldPath = path.join(__dirname, '../../', currentResult.rows[0].image);
-                if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
-            }
+        let image = undefined;
+        if (req.file) {
+            const b64 = req.file.buffer.toString('base64');
+            image = `data:${req.file.mimetype};base64,${b64}`;
         }
 
         let query = 'UPDATE "Categories" SET "updatedAt" = NOW()';
@@ -112,14 +112,6 @@ async function remove(req, res) {
             return res.status(400).json({
                 error: 'No se puede eliminar. La categoría tiene productos asociados.'
             });
-        }
-
-        // Eliminar imagen si existe
-        const currentResult = await db.query('SELECT image FROM "Categories" WHERE id = $1', [req.params.id]);
-
-        if (currentResult.rows[0]?.image) {
-            const imgPath = path.join(__dirname, '../../', currentResult.rows[0].image);
-            if (fs.existsSync(imgPath)) fs.unlinkSync(imgPath);
         }
 
         const result = await db.query('DELETE FROM "Categories" WHERE id = $1', [req.params.id]);

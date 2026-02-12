@@ -92,7 +92,7 @@ export default function AdminCategories() {
                             <tr key={c.id}>
                                 <td>
                                     {c.image ? (
-                                        <img src={`${API_BASE}${c.image}`} alt={c.name} className="admin-table-img" />
+                                        <img src={c.image.startsWith('data:') || c.image.startsWith('http') ? c.image : `${API_BASE}${c.image}`} alt={c.name} className="admin-table-img" />
                                     ) : (
                                         <div className="admin-table-img" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>🏷️</div>
                                     )}
