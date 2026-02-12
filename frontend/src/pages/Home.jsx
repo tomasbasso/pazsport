@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { FiArrowDown } from 'react-icons/fi';
 import ProductCard from '../components/ProductCard';
+import InstagramFeed from '../components/InstagramFeed';
 import Footer from '../components/Footer';
 import { categoriesAPI, productsAPI } from '../services/api';
 
@@ -54,6 +55,9 @@ export default function Home() {
                     Ver Catálogo <FiArrowDown />
                 </a>
             </section>
+
+            {/* Instagram Feed */}
+            <InstagramFeed />
 
             {/* Categories */}
             <section className="categories-section" id="catalogo">
