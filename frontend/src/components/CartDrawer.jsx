@@ -38,7 +38,7 @@ export default function CartDrawer() {
                     ) : (
                         items.map((item) => {
                             const imageUrl = item.product.image
-                                ? `${API_BASE}${item.product.image}`
+                                ? (item.product.image.startsWith('data:') || item.product.image.startsWith('http') ? item.product.image : `${API_BASE}${item.product.image}`)
                                 : null;
 
                             return (

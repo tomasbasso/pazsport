@@ -119,7 +119,7 @@ export default function Checkout() {
                                     <div key={`${item.product.id}-${item.size}`} className="summary-item">
                                         <div className="summary-item-image">
                                             {item.product.image ? (
-                                                <img src={`${API_BASE}${item.product.image}`} alt={item.product.name} />
+                                                <img src={item.product.image.startsWith('data:') || item.product.image.startsWith('http') ? item.product.image : `${API_BASE}${item.product.image}`} alt={item.product.name} />
                                             ) : (
                                                 <div className="placeholder-image">🏃</div>
                                             )}

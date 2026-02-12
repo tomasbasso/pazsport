@@ -114,7 +114,7 @@ export default function AdminProducts() {
                             <tr key={p.id}>
                                 <td>
                                     {p.image ? (
-                                        <img src={`${API_BASE}${p.image}`} alt={p.name} className="admin-table-img" />
+                                        <img src={p.image.startsWith('data:') || p.image.startsWith('http') ? p.image : `${API_BASE}${p.image}`} alt={p.name} className="admin-table-img" />
                                     ) : (
                                         <div className="admin-table-img" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>🏃</div>
                                     )}

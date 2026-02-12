@@ -54,7 +54,9 @@ export default function ProductDetail() {
     if (loading) return <div className="loading-spinner"><div className="spinner"></div></div>;
     if (!product) return null;
 
-    const imageUrl = product.image ? `${API_BASE}${product.image}` : null;
+    const imageUrl = product.image
+        ? (product.image.startsWith('data:') || product.image.startsWith('http') ? product.image : `${API_BASE}${product.image}`)
+        : null;
 
     return (
         <>

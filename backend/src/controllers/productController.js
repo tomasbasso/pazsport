@@ -72,7 +72,13 @@ async function getById(req, res) {
 async function create(req, res) {
     try {
         const { name, description, price, categoryId, sizes, colors, stock, isActive } = req.body;
-        const image = req.file ? `/uploads/${req.file.filename}` : null;
+
+        // Convertir imagen a Base64 para persistencia en DB
+        let image = null;
+        if (req.file) {
+            const b64 = req.file.buffer.toString('base64');
+            image = `data:${req.file.mimetype};base64,${b64}`;
+        }
 
         if (!name || !price || !categoryId) {
             return res.status(400).json({ error: 'Nombre, precio y categoría son requeridos' });
@@ -114,15 +120,11 @@ async function create(req, res) {
 async function update(req, res) {
     try {
         const { name, description, price, categoryId, sizes, colors, stock, isActive } = req.body;
-        const image = req.file ? `/uploads/${req.file.filename}` : undefined;
 
-        // Si se sube nueva imagen, eliminar la vieja
-        if (image) {
-            const currentResult = await db.query('SELECT image FROM "Products" WHERE id = $1', [req.params.id]);
-            if (currentResult.rows[0]?.image) {
-                const oldPath = path.join(__dirname, '../../', currentResult.rows[0].image);
-                if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
-            }
+        let image = undefined;
+        if (req.file) {
+            const b64 = req.file.buffer.toString('base64');
+            image = `data:${req.file.mimetype};base64,${b64}`;
         }
 
         let query = 'UPDATE "Products" SET "updatedAt" = NOW()';
@@ -190,14 +192,6 @@ async function update(req, res) {
 // DELETE /api/products/:id
 async function remove(req, res) {
     try {
-        // Eliminar imagen si existe
-        const currentResult = await db.query('SELECT image FROM "Products" WHERE id = $1', [req.params.id]);
-
-        if (currentResult.rows[0]?.image) {
-            const imgPath = path.join(__dirname, '../../', currentResult.rows[0].image);
-            if (fs.existsSync(imgPath)) fs.unlinkSync(imgPath);
-        }
-
         const result = await db.query('DELETE FROM "Products" WHERE id = $1', [req.params.id]);
 
         if (result.rowCount === 0) {

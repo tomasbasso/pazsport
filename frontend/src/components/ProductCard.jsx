@@ -24,7 +24,9 @@ export default function ProductCard({ product }) {
         if (product.sizes?.length > 0 && !selectedSize) setSelectedSize(sizeToAdd);
     };
 
-    const imageUrl = product.image ? `${API_BASE}${product.image}` : null;
+    const imageUrl = product.image
+        ? (product.image.startsWith('data:') || product.image.startsWith('http') ? product.image : `${API_BASE}${product.image}`)
+        : null;
 
     return (
         <div className="product-card">
