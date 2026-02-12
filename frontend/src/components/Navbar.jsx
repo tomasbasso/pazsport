@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { FiShoppingBag, FiMenu, FiX } from 'react-icons/fi';
+import { FiShoppingBag, FiMenu, FiX, FiUser } from 'react-icons/fi';
 import { useCart } from '../context/CartContext';
 import { useState } from 'react';
 
@@ -33,6 +33,10 @@ export default function Navbar() {
                     <li><a href="#contacto" onClick={closeMenu}>Contacto</a></li>
                 </ul>
 
+                <Link to="/admin/login" className="navbar-icon-link" aria-label="Ingresar">
+                    <FiUser />
+                </Link>
+
                 <button className="navbar-cart" onClick={() => setIsOpen(true)} aria-label="Abrir carrito">
                     <FiShoppingBag />
                     {totalItems > 0 && (
@@ -43,6 +47,22 @@ export default function Navbar() {
 
             {/* Overlay for mobile menu */}
             {isMenuOpen && <div className="navbar-overlay" onClick={closeMenu}></div>}
+
+            <style>{`
+                .navbar-icon-link {
+                    color: var(--text-primary);
+                    font-size: 1.5rem;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    margin-right: 15px;
+                    text-decoration: none;
+                    transition: color 0.2s;
+                }
+                .navbar-icon-link:hover {
+                    color: var(--primary);
+                }
+            `}</style>
         </nav>
     );
 }
