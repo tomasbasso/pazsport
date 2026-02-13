@@ -48,6 +48,10 @@ export default function Home() {
 
     return (
         <>
+            <SEO
+                title="Inicio"
+                description="Bienvenido a PazSport, tu tienda de ropa deportiva en Winifreda, La Pampa. Encuentra lo mejor en indumentaria unisex."
+            />
             {/* Hero */}
             <section className="hero">
                 <h1>Tu Estilo Deportivo</h1>
