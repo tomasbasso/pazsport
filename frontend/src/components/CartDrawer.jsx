@@ -122,7 +122,7 @@ export default function CartDrawer() {
                 }
                 
                 .cart-checkout-btn {
-                    width: 100%; padding: 16px; background: var(--primary); color: white;
+                    width: 100%; padding: 16px; background: var(--accent); color: white;
                     border: none; border-radius: 50px; font-size: 1.1rem; font-weight: 600;
                     cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
                     transition: all 0.3s; box-shadow: 0 4px 15px rgba(235, 122, 169, 0.3);
