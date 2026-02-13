@@ -4,6 +4,7 @@ import ProductCard from '../components/ProductCard';
 
 import Footer from '../components/Footer';
 import { categoriesAPI, productsAPI } from '../services/api';
+import SEO from '../components/SEO';
 
 export default function Home() {
     const [categories, setCategories] = useState([]);

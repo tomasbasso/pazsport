@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FiArrowLeft, FiMinus, FiPlus, FiShoppingBag } from 'react-icons/fi';
+import { FaShoppingCart, FaArrowLeft } from 'react-icons/fa';
+import { FiMinus, FiPlus, FiShoppingBag } from 'react-icons/fi';
 import { productsAPI } from '../services/api';
 import { useCart } from '../context/CartContext';
+import SEO from '../components/SEO';
 import Footer from '../components/Footer';
 
 const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3001';
@@ -27,11 +29,9 @@ export default function ProductDetail() {
             const { data } = await productsAPI.getById(id);
             setProduct(data);
             if (data.sizes?.length > 0) setSelectedSize(data.sizes[0]);
-            // No auto-seleccionar color para obligar al usuario a elegir
-            // if (data.colors?.length > 0) setSelectedColor(data.colors[0]);
         } catch (err) {
             console.error('Error cargando producto:', err);
-            navigate('/'); // Redirigir si falla (o mostrar 404)
+            navigate('/');
         } finally {
             setLoading(false);
         }
@@ -39,16 +39,13 @@ export default function ProductDetail() {
 
     const handleAddToCart = () => {
         if (!product) return;
-
         if (product.colors?.length > 0 && !selectedColor) {
             alert('Por favor elegí un color');
             return;
         }
-
         const sizeToAdd = selectedSize || 'Único';
         const colorToAdd = selectedColor || null;
         addItem(product, sizeToAdd, quantity, colorToAdd);
-        // Opcional: Mostrar feedback o abrir carrito
     };
 
     if (loading) return <div className="loading-spinner"><div className="spinner"></div></div>;
@@ -60,14 +57,18 @@ export default function ProductDetail() {
 
     return (
         <>
+            <SEO
+                title={product.name}
+                description={`Compra ${product.name} en PazSport Winifreda. ${product.description || 'Indumentaria deportiva de calidad.'}`}
+                image={imageUrl}
+            />
             <div className="product-detail-page">
                 <div className="product-detail-container">
                     <button onClick={() => navigate(-1)} className="back-btn">
-                        <FiArrowLeft /> Volver
+                        <FaArrowLeft /> Volver
                     </button>
 
                     <div className="product-detail-grid">
-                        {/* Galería / Imagen */}
                         <div className="product-detail-image-container">
                             {imageUrl ? (
                                 <img src={imageUrl} alt={product.name} className="product-detail-img" />
@@ -78,7 +79,6 @@ export default function ProductDetail() {
                             )}
                         </div>
 
-                        {/* Info */}
                         <div className="product-detail-info">
                             <h1 className="product-title">{product.name}</h1>
                             <div className="product-price">${product.price?.toLocaleString('es-AR')}</div>
@@ -88,7 +88,6 @@ export default function ProductDetail() {
                             </p>
 
                             <div className="product-meta">
-                                {/* Talles */}
                                 {product.sizes?.length > 0 && (
                                     <div className="meta-group">
                                         <label>Talle</label>
@@ -106,7 +105,6 @@ export default function ProductDetail() {
                                     </div>
                                 )}
 
-                                {/* Cantidad y Color */}
                                 {product.colors?.length > 0 && (
                                     <div className="meta-group">
                                         <label>Color</label>
@@ -165,7 +163,7 @@ export default function ProductDetail() {
                     min-height: 100vh;
                     background: var(--background);
                     padding: 2rem;
-                    padding-top: 100px; /* Navbar space */
+                    padding-top: 100px;
                 }
                 .product-detail-container {
                     max-width: 1100px;
@@ -185,13 +183,13 @@ export default function ProductDetail() {
                     grid-template-columns: 1fr 1fr;
                     gap: 3rem;
                     background: var(--surface);
-                    border-radius: var(--radius-lg); /** Use lg for larger radius */
+                    border-radius: var(--radius-lg);
                     padding: 2rem;
-                    box-shadow: var(--shadow-sm); /** Use sm for subtle shadow */
+                    box-shadow: var(--shadow-sm);
                     border: 1px solid var(--border-light);
                 }
 
-                @media (max-width: 768px) {
+                @media(max-width: 768px) {
                     .product-detail-grid { grid-template-columns: 1fr; gap: 2rem; }
                     .product-detail-page { padding: 1rem; padding-top: 90px; }
                 }

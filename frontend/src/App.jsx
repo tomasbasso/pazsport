@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { HelmetProvider } from 'react-helmet-async';
 import { CartProvider } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
 import Navbar from './components/Navbar';
@@ -14,31 +15,33 @@ import './index.css';
 
 function App() {
     return (
-        <BrowserRouter>
-            <AuthProvider>
-                <CartProvider>
-                    <Navbar />
-                    <CartDrawer />
-                    <Routes>
-                        {/* Public */}
-                        <Route path="/" element={<Home />} />
-                        <Route path="/product/:id" element={<ProductDetail />} />
-                        <Route path="/checkout" element={<Checkout />} />
+        <HelmetProvider>
+            <BrowserRouter>
+                <AuthProvider>
+                    <CartProvider>
+                        <Navbar />
+                        <CartDrawer />
+                        <Routes>
+                            {/* Public */}
+                            <Route path="/" element={<Home />} />
+                            <Route path="/product/:id" element={<ProductDetail />} />
+                            <Route path="/checkout" element={<Checkout />} />
 
-                        {/* Admin */}
-                        <Route path="/admin/login" element={<AdminLogin />} />
-                        <Route path="/admin" element={<AdminLayout />}>
-                            <Route index element={<Navigate to="/admin/products" replace />} />
-                            <Route path="products" element={<AdminProducts />} />
-                            <Route path="categories" element={<AdminCategories />} />
-                        </Route>
+                            {/* Admin */}
+                            <Route path="/admin/login" element={<AdminLogin />} />
+                            <Route path="/admin" element={<AdminLayout />}>
+                                <Route index element={<Navigate to="/admin/products" replace />} />
+                                <Route path="products" element={<AdminProducts />} />
+                                <Route path="categories" element={<AdminCategories />} />
+                            </Route>
 
-                        {/* 404 */}
-                        <Route path="*" element={<Navigate to="/" replace />} />
-                    </Routes>
-                </CartProvider>
-            </AuthProvider>
-        </BrowserRouter>
+                            {/* 404 */}
+                            <Route path="*" element={<Navigate to="/" replace />} />
+                        </Routes>
+                    </CartProvider>
+                </AuthProvider>
+            </BrowserRouter>
+        </HelmetProvider >
     );
 }
 
