@@ -41,7 +41,7 @@ function App() {
                     </CartProvider>
                 </AuthProvider>
             </BrowserRouter>
-        </HelmetProvider >
+        </HelmetProvider>
     );
 }
 
