@@ -13,7 +13,7 @@ export default function SEO({ title, description, keywords, image, url }) {
     const metaImage = image || defaultImage;
     const metaUrl = url || siteUrl;
 
-    console.log('SEO Debug:', { metaTitle, metaDescription, metaUrl });
+
 
     // JSON-LD para Negocio Local
     const structuredData = {

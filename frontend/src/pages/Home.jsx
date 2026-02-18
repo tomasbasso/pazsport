@@ -92,7 +92,9 @@ export default function Home() {
                         : 'Todos los Productos'}
                 </h2>
                 {loading ? (
-                    <div className="loading-spinner"><div className="spinner"></div></div>
+                    <div className="loading-spinner">
+                        <p className="loading-text">Cargando productos, por favor espere...</p>
+                    </div>
                 ) : products.length === 0 ? (
                     <div className="products-empty">
                         <div className="products-empty-icon">📦</div>
