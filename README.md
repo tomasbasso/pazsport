@@ -80,6 +80,6 @@ El proyecto utiliza una arquitectura moderna separada en Frontend y Backend:
 ---
 
 <div align="center">
-  <p>Desarrollado con ❤️ por <strong>Tomas Basso</strong></p>
+  <p>Desarrollado por <strong>Tomas Basso</strong></p>
   <p><em>Técnico en Informática de Gestión</em></p>
 </div>
