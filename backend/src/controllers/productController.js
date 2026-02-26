@@ -1,6 +1,5 @@
 const db = require('../config/database');
-const path = require('path');
-const fs = require('fs');
+const { uploadImage, deleteImage } = require('../config/supabase');
 
 // GET /api/products
 async function getAll(req, res) {
@@ -28,7 +27,6 @@ async function getAll(req, res) {
 
         const result = await db.query(query, params);
 
-        // Parsear sizes y colors de JSON string a array
         const products = result.rows.map(p => ({
             ...p,
             sizes: p.sizes ? JSON.parse(p.sizes) : [],
@@ -73,30 +71,24 @@ async function create(req, res) {
     try {
         const { name, description, price, categoryId, sizes, colors, stock, isActive } = req.body;
 
-        // Convertir imagen a Base64 para persistencia en DB
-        let image = null;
-        if (req.file) {
-            const b64 = req.file.buffer.toString('base64');
-            image = `data:${req.file.mimetype};base64,${b64}`;
-        }
-
         if (!name || !price || !categoryId) {
             return res.status(400).json({ error: 'Nombre, precio y categoría son requeridos' });
         }
 
+        // Insertar primero para obtener el ID (necesario para el nombre del archivo en Storage)
         const sizesJson = Array.isArray(sizes) ? JSON.stringify(sizes) : sizes || '[]';
         const colorsJson = Array.isArray(colors) ? JSON.stringify(colors) : colors || '[]';
 
-        const query = `
+        const insertQuery = `
             INSERT INTO "Products" (name, description, price, image, "categoryId", sizes, colors, stock, "isActive")
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
             RETURNING *
         `;
-        const values = [
+        const insertValues = [
             name,
             description || null,
             price,
-            image,
+            null, // imagen se actualiza después de subir a Storage
             categoryId,
             sizesJson,
             colorsJson,
@@ -104,8 +96,18 @@ async function create(req, res) {
             isActive !== undefined ? isActive : true
         ];
 
-        const result = await db.query(query, values);
+        const result = await db.query(insertQuery, insertValues);
         const product = result.rows[0];
+
+        // Ahora subir imagen a Storage si existe
+        if (req.file) {
+            const imageUrl = await uploadImage(req.file.buffer, req.file.mimetype, 'products', product.id);
+            if (imageUrl) {
+                await db.query('UPDATE "Products" SET image = $1 WHERE id = $2', [imageUrl, product.id]);
+                product.image = imageUrl;
+            }
+        }
+
         product.sizes = product.sizes ? JSON.parse(product.sizes) : [];
         product.colors = product.colors ? JSON.parse(product.colors) : [];
 
@@ -121,15 +123,9 @@ async function update(req, res) {
     try {
         const { name, description, price, categoryId, sizes, colors, stock, isActive } = req.body;
 
-        let image = undefined;
-        if (req.file) {
-            const b64 = req.file.buffer.toString('base64');
-            image = `data:${req.file.mimetype};base64,${b64}`;
-        }
-
         let query = 'UPDATE "Products" SET "updatedAt" = NOW()';
         const params = [req.params.id]; // $1 es el ID
-        let paramIndex = 2; // Empezamos desde $2
+        let paramIndex = 2;
 
         if (name !== undefined) {
             query += `, name = $${paramIndex++}`;
@@ -142,10 +138,6 @@ async function update(req, res) {
         if (price !== undefined) {
             query += `, price = $${paramIndex++}`;
             params.push(price);
-        }
-        if (image !== undefined) {
-            query += `, image = $${paramIndex++}`;
-            params.push(image);
         }
         if (categoryId !== undefined) {
             query += `, "categoryId" = $${paramIndex++}`;
@@ -170,6 +162,21 @@ async function update(req, res) {
             params.push(isActive);
         }
 
+        // Subir nueva imagen a Storage si viene en la request
+        if (req.file) {
+            // Obtener imagen anterior para eliminarla de Storage
+            const existing = await db.query('SELECT image FROM "Products" WHERE id = $1', [req.params.id]);
+            if (existing.rows[0]?.image) {
+                await deleteImage(existing.rows[0].image);
+            }
+
+            const imageUrl = await uploadImage(req.file.buffer, req.file.mimetype, 'products', req.params.id);
+            if (imageUrl) {
+                query += `, image = $${paramIndex++}`;
+                params.push(imageUrl);
+            }
+        }
+
         query += ' WHERE id = $1 RETURNING *';
 
         const result = await db.query(query, params);
@@ -192,6 +199,12 @@ async function update(req, res) {
 // DELETE /api/products/:id
 async function remove(req, res) {
     try {
+        // Eliminar imagen de Storage antes de borrar el registro
+        const existing = await db.query('SELECT image FROM "Products" WHERE id = $1', [req.params.id]);
+        if (existing.rows[0]?.image) {
+            await deleteImage(existing.rows[0].image);
+        }
+
         const result = await db.query('DELETE FROM "Products" WHERE id = $1', [req.params.id]);
 
         if (result.rowCount === 0) {
