@@ -19,6 +19,11 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 
+// Endpoint público para evitar sleep en Render (Cron Jobs / UptimeRobot)
+app.get('/ping', (req, res) => {
+    res.status(200).json({ status: 'ok', message: 'Backend activo' });
+});
+
 // Rate Limiting
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
