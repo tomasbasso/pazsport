@@ -19,6 +19,7 @@ export default function ProductDetail() {
     const [selectedSize, setSelectedSize] = useState(null);
     const [selectedColor, setSelectedColor] = useState(null);
     const [quantity, setQuantity] = useState(1);
+    const [activeImageIndex, setActiveImageIndex] = useState(0);
 
     useEffect(() => {
         loadProduct();
@@ -52,16 +53,27 @@ export default function ProductDetail() {
     if (loading) return <div className="loading-spinner"><div className="spinner"></div></div>;
     if (!product) return null;
 
-    const imageUrl = product.image
-        ? (product.image.startsWith('data:') || product.image.startsWith('http') ? product.image : `${API_BASE}${product.image}`)
-        : null;
+    // Obtener array de imagenes
+    let imagesList = [];
+    if (product.images && product.images.length > 0) {
+        imagesList = product.images;
+    } else if (product.image) {
+        imagesList = [product.image];
+    }
+
+    // Normalizar URLs
+    const formattedImages = imagesList.map(img =>
+        (img.startsWith('data:') || img.startsWith('http') ? img : `${API_BASE}${img}`)
+    );
+
+    const mainImageUrl = formattedImages.length > 0 ? formattedImages[activeImageIndex] : null;
 
     return (
         <>
             <SEO
                 title={product.name}
                 description={`Compra ${product.name} en PazSport Winifreda. ${product.description || 'Indumentaria deportiva de calidad.'}`}
-                image={imageUrl}
+                image={mainImageUrl}
             />
             <div className="product-detail-page">
                 <div className="product-detail-container">
@@ -70,12 +82,28 @@ export default function ProductDetail() {
                     </button>
 
                     <div className="product-detail-grid">
-                        <div className="product-detail-image-container">
-                            {imageUrl ? (
-                                <img src={imageUrl} alt={product.name} className="product-detail-img" />
-                            ) : (
-                                <div className="product-detail-placeholder">
-                                    <span>🧢</span>
+                        <div className="product-detail-gallery">
+                            <div className="product-detail-image-container">
+                                {mainImageUrl ? (
+                                    <img src={mainImageUrl} alt={product.name} className="product-detail-img" key={mainImageUrl} />
+                                ) : (
+                                    <div className="product-detail-placeholder">
+                                        <span>🧢</span>
+                                    </div>
+                                )}
+                            </div>
+
+                            {formattedImages.length > 1 && (
+                                <div className="product-thumbnails">
+                                    {formattedImages.map((imgUrl, index) => (
+                                        <div
+                                            key={index}
+                                            className={`thumbnail ${index === activeImageIndex ? 'active' : ''}`}
+                                            onClick={() => setActiveImageIndex(index)}
+                                        >
+                                            <img src={imgUrl} alt={`${product.name} - Vista ${index + 1}`} />
+                                        </div>
+                                    ))}
                                 </div>
                             )}
                         </div>
@@ -195,20 +223,68 @@ export default function ProductDetail() {
                     .product-detail-page { padding: 1rem; padding-top: 90px; }
                 }
 
+                .product-detail-gallery {
+                    width: 100%;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 1rem;
+                }
                 .product-detail-image-container {
                     width: 100%;
                     aspect-ratio: 1;
-                    border-radius: var(--radius-md);
+                    border-radius: var(--radius-lg);
                     overflow: hidden;
-                    background: linear-gradient(135deg, var(--primary-light), var(--surface-alt));
+                    background: linear-gradient(135deg, var(--surface-alt), #e0e0e0);
                     display: flex; align-items: center; justify-content: center;
+                    box-shadow: inset 0 0 20px rgba(0,0,0,0.05);
                 }
                 .product-detail-img {
                     width: 100%; height: 100%; object-fit: cover;
-                    transition: transform 0.6s ease;
+                    animation: fadeIn 0.4s ease-out;
                 }
-                .product-detail-img:hover { transform: scale(1.05); }
+                @keyframes fadeIn {
+                    from { opacity: 0; transform: scale(1.02); }
+                    to { opacity: 1; transform: scale(1); }
+                }
                 .product-detail-placeholder { font-size: 5rem; opacity: 0.2; }
+
+                .product-thumbnails {
+                    display: flex;
+                    gap: 10px;
+                    overflow-x: auto;
+                    padding-bottom: 5px;
+                    scrollbar-width: thin;
+                }
+                .product-thumbnails::-webkit-scrollbar {
+                    height: 4px;
+                }
+                .product-thumbnails::-webkit-scrollbar-thumb {
+                    background: var(--border);
+                    border-radius: 4px;
+                }
+                .thumbnail {
+                    min-width: 80px;
+                    width: 80px;
+                    height: 80px;
+                    border-radius: var(--radius-md);
+                    overflow: hidden;
+                    cursor: pointer;
+                    border: 2px solid transparent;
+                    transition: all 0.2s ease;
+                    opacity: 0.6;
+                }
+                .thumbnail img {
+                    width: 100%; height: 100%; object-fit: cover;
+                }
+                .thumbnail:hover {
+                    opacity: 0.9;
+                    transform: translateY(-2px);
+                }
+                .thumbnail.active {
+                    border-color: var(--accent);
+                    opacity: 1;
+                    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+                }
 
                 .product-title {
                     font-family: var(--font-display);

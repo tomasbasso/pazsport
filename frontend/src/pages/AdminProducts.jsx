@@ -12,7 +12,11 @@ export default function AdminProducts() {
     const [showModal, setShowModal] = useState(false);
     const [editing, setEditing] = useState(null);
     const [form, setForm] = useState({ name: '', description: '', price: '', categoryId: '', sizes: '', colors: '', stock: '', isActive: true });
-    const [imageFile, setImageFile] = useState(null);
+
+    // Para imágenes existentes (URLs) que ya venían del backend
+    const [existingImages, setExistingImages] = useState([]);
+    // Para nuevas imágenes (Files) seleccionadas por el usuario
+    const [newImages, setNewImages] = useState([]);
 
     useEffect(() => { loadData(); }, []);
 
@@ -34,7 +38,8 @@ export default function AdminProducts() {
     function openCreate() {
         setEditing(null);
         setForm({ name: '', description: '', price: '', categoryId: categories[0]?.id || '', sizes: 'S,M,L,XL', colors: '', stock: '0', isActive: true });
-        setImageFile(null);
+        setExistingImages([]);
+        setNewImages([]);
         setShowModal(true);
     }
 
@@ -50,7 +55,15 @@ export default function AdminProducts() {
             stock: product.stock.toString(),
             isActive: product.isActive,
         });
-        setImageFile(null);
+
+        let imagesArray = [];
+        if (product.images && product.images.length > 0) {
+            imagesArray = product.images;
+        } else if (product.image) {
+            imagesArray = [product.image];
+        }
+        setExistingImages(imagesArray);
+        setNewImages([]);
         setShowModal(true);
     }
 
@@ -65,7 +78,16 @@ export default function AdminProducts() {
         formData.append('colors', JSON.stringify(form.colors.split(',').map(c => c.trim()).filter(Boolean)));
         formData.append('stock', form.stock);
         formData.append('isActive', form.isActive);
-        if (imageFile) formData.append('image', imageFile);
+
+        // Agregar imágenes existentes que se mantienen
+        formData.append('existingImages', JSON.stringify(existingImages));
+
+        // Agregar archivos nuevos
+        if (newImages.length > 0) {
+            newImages.forEach(file => {
+                formData.append('images', file);
+            });
+        }
 
         try {
             if (editing) {
@@ -111,33 +133,36 @@ export default function AdminProducts() {
                         </tr>
                     </thead>
                     <tbody>
-                        {products.map(p => (
-                            <tr key={p.id}>
-                                <td>
-                                    {p.image ? (
-                                        <img src={p.image.startsWith('data:') || p.image.startsWith('http') ? p.image : `${API_BASE}${p.image}`} alt={p.name} className="admin-table-img" />
-                                    ) : (
-                                        <div className="admin-table-img" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>🏃</div>
-                                    )}
-                                </td>
-                                <td><strong>{p.name}</strong></td>
-                                <td>{p.categoryName || '-'}</td>
-                                <td>${formatPrice(p.price)}</td>
-                                <td>{p.sizes?.join(', ') || '-'}</td>
-                                <td>{p.stock}</td>
-                                <td>
-                                    <span className={`badge ${p.isActive ? 'badge-active' : 'badge-inactive'}`}>
-                                        {p.isActive ? 'Activo' : 'Inactivo'}
-                                    </span>
-                                </td>
-                                <td>
-                                    <div className="admin-actions">
-                                        <button className="admin-action-btn" onClick={() => openEdit(p)} title="Editar"><FiEdit2 /></button>
-                                        <button className="admin-action-btn delete" onClick={() => handleDelete(p.id)} title="Eliminar"><FiTrash2 /></button>
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
+                        {products.map(p => {
+                            const firstImage = p.images && p.images.length > 0 ? p.images[0] : p.image;
+                            return (
+                                <tr key={p.id}>
+                                    <td>
+                                        {firstImage ? (
+                                            <img src={firstImage.startsWith('data:') || firstImage.startsWith('http') ? firstImage : `${API_BASE}${firstImage}`} alt={p.name} className="admin-table-img" />
+                                        ) : (
+                                            <div className="admin-table-img" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>🏃</div>
+                                        )}
+                                    </td>
+                                    <td><strong>{p.name}</strong></td>
+                                    <td>{p.categoryName || '-'}</td>
+                                    <td>${formatPrice(p.price)}</td>
+                                    <td>{p.sizes?.join(', ') || '-'}</td>
+                                    <td>{p.stock}</td>
+                                    <td>
+                                        <span className={`badge ${p.isActive ? 'badge-active' : 'badge-inactive'}`}>
+                                            {p.isActive ? 'Activo' : 'Inactivo'}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div className="admin-actions">
+                                            <button className="admin-action-btn" onClick={() => openEdit(p)} title="Editar"><FiEdit2 /></button>
+                                            <button className="admin-action-btn delete" onClick={() => handleDelete(p.id)} title="Eliminar"><FiTrash2 /></button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            );
+                        })}
                     </tbody>
                 </table>
             </div>
@@ -194,8 +219,39 @@ export default function AdminProducts() {
                                 </div>
                             </div>
                             <div className="form-group">
-                                <label>Imagen</label>
-                                <input type="file" accept="image/*" onChange={e => setImageFile(e.target.files[0])} />
+                                <label>Imágenes (puedes seleccionar múltiples)</label>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    multiple
+                                    onChange={e => setNewImages(Array.from(e.target.files))}
+                                />
+
+                                <div style={{ display: 'flex', gap: '10px', marginTop: '15px', flexWrap: 'wrap' }}>
+                                    {/* Imágenes Existentes (URLs) */}
+                                    {existingImages.map((imgUrl, index) => (
+                                        <div key={`existing-${index}`} style={{ position: 'relative', width: '80px', height: '80px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border)' }}>
+                                            <img src={imgUrl.startsWith('http') ? imgUrl : `${API_BASE}${imgUrl}`} alt="Existente" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                            <button
+                                                type="button"
+                                                onClick={() => setExistingImages(existingImages.filter((_, i) => i !== index))}
+                                                style={{ position: 'absolute', top: '2px', right: '2px', background: 'rgba(255,0,0,0.8)', color: 'white', border: 'none', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '12px' }}
+                                            ><FiX /></button>
+                                        </div>
+                                    ))}
+
+                                    {/* Imágenes Nuevas (Previews usando URL.createObjectURL) */}
+                                    {newImages.map((file, index) => (
+                                        <div key={`new-${index}`} style={{ position: 'relative', width: '80px', height: '80px', borderRadius: '8px', overflow: 'hidden', border: '2px dashed var(--accent)' }}>
+                                            <img src={URL.createObjectURL(file)} alt="Nueva" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                            <button
+                                                type="button"
+                                                onClick={() => setNewImages(newImages.filter((_, i) => i !== index))}
+                                                style={{ position: 'absolute', top: '2px', right: '2px', background: 'rgba(255,0,0,0.8)', color: 'white', border: 'none', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '12px' }}
+                                            ><FiX /></button>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                             <div className="form-group">
                                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>

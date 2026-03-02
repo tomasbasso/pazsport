@@ -18,7 +18,8 @@ const STORAGE_BUCKET = process.env.SUPABASE_STORAGE_BUCKET || 'product-images';
  */
 async function uploadImage(buffer, mimeType, folder, entityId) {
     const ext = mimeType.split('/')[1]?.replace('jpeg', 'jpg') || 'jpg';
-    const filename = `${folder}/${entityId}_${Date.now()}.${ext}`;
+    const randomStr = Math.random().toString(36).substring(2, 8);
+    const filename = `${folder}/${entityId}_${Date.now()}_${randomStr}.${ext}`;
 
     const { error } = await supabase.storage
         .from(STORAGE_BUCKET)
