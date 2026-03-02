@@ -11,7 +11,7 @@ export default function AdminProducts() {
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [editing, setEditing] = useState(null);
-    const [form, setForm] = useState({ name: '', description: '', price: '', categoryId: '', sizes: '', colors: '', stock: '', isActive: true });
+    const [form, setForm] = useState({ name: '', description: '', price: '', categoryId: '', sizes: '', colors: '', stock: '', isActive: true, discount: 0 });
 
     // Para imágenes existentes (URLs) que ya venían del backend
     const [existingImages, setExistingImages] = useState([]);
@@ -37,7 +37,7 @@ export default function AdminProducts() {
 
     function openCreate() {
         setEditing(null);
-        setForm({ name: '', description: '', price: '', categoryId: categories[0]?.id || '', sizes: 'S,M,L,XL', colors: '', stock: '0', isActive: true });
+        setForm({ name: '', description: '', price: '', categoryId: categories[0]?.id || '', sizes: 'S,M,L,XL', colors: '', stock: '0', isActive: true, discount: 0 });
         setExistingImages([]);
         setNewImages([]);
         setShowModal(true);
@@ -54,6 +54,7 @@ export default function AdminProducts() {
             colors: product.colors?.join(',') || '',
             stock: product.stock.toString(),
             isActive: product.isActive,
+            discount: product.discount || 0,
         });
 
         let imagesArray = [];
@@ -78,6 +79,7 @@ export default function AdminProducts() {
         formData.append('colors', JSON.stringify(form.colors.split(',').map(c => c.trim()).filter(Boolean)));
         formData.append('stock', form.stock);
         formData.append('isActive', form.isActive);
+        formData.append('discount', form.discount);
 
         // Agregar imágenes existentes que se mantienen
         formData.append('existingImages', JSON.stringify(existingImages));
@@ -128,7 +130,7 @@ export default function AdminProducts() {
                     <thead>
                         <tr>
                             <th>Imagen</th><th>Nombre</th><th>Categoría</th>
-                            <th>Precio</th><th>Talles</th><th>Stock</th>
+                            <th>Precio</th><th>Dcto</th><th>Talles</th><th>Stock</th>
                             <th>Estado</th><th>Acciones</th>
                         </tr>
                     </thead>
@@ -147,6 +149,7 @@ export default function AdminProducts() {
                                     <td><strong>{p.name}</strong></td>
                                     <td>{p.categoryName || '-'}</td>
                                     <td>${formatPrice(p.price)}</td>
+                                    <td>{p.discount ? `${p.discount}%` : '-'}</td>
                                     <td>{p.sizes?.join(', ') || '-'}</td>
                                     <td>{p.stock}</td>
                                     <td>
@@ -183,10 +186,14 @@ export default function AdminProducts() {
                                 <label>Descripción</label>
                                 <input value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
                             </div>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
                                 <div className="form-group">
-                                    <label>Precio *</label>
+                                    <label>Precio Final *</label>
                                     <input type="number" step="0.01" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} required />
+                                </div>
+                                <div className="form-group">
+                                    <label>% Descuento</label>
+                                    <input type="number" min="0" max="100" value={form.discount} onChange={e => setForm({ ...form, discount: e.target.value })} />
                                 </div>
                                 <div className="form-group">
                                     <label>Stock</label>

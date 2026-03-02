@@ -54,9 +54,12 @@ export default function ProductCard({ product }) {
     return (
         <div className="product-card">
             <div className="product-card-image" style={{ position: 'relative' }}>
+                {product.discount > 0 && (
+                    <div className="product-card-badge">{product.discount}% OFF</div>
+                )}
                 <Link to={`/product/${product.id}`} style={{ display: 'block', width: '100%', height: '100%', textDecoration: 'none' }}>
                     {imageUrl ? (
-                        <img src={imageUrl} alt={product.name} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <img src={imageUrl} alt={product.name} loading="lazy" />
                     ) : (
                         <span style={{ fontSize: '3rem', display: 'flex', width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center' }}>🧢</span>
                     )}
@@ -81,10 +84,41 @@ export default function ProductCard({ product }) {
                 )}
             </div>
             <div className="product-card-body">
-                <h3 className="product-card-name">{product.name}</h3>
-                <p className="product-card-desc">{product.description || 'Indumentaria deportiva premium'}</p>
-                <div className="product-card-price">
-                    ${formatPrice(product.price)}
+                <div className="product-card-header-row">
+                    <h3 className="product-card-name">{product.name}</h3>
+                    {product.colors?.length > 0 && (
+                        <div className="product-card-colors" style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', justifyContent: 'flex-end', minWidth: '50px' }}>
+                            {product.colors.map(color => (
+                                <span
+                                    key={color}
+                                    style={{
+                                        width: '14px', height: '14px',
+                                        background: color, border: selectedColor === color ? '1px solid var(--text-primary)' : '1px solid #ddd',
+                                        cursor: 'pointer',
+                                    }}
+                                    onClick={() => setSelectedColor(color)}
+                                    title={color}
+                                />
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                <div className="product-card-price-row">
+                    {product.discount > 0 ? (
+                        <>
+                            <span className="product-card-price-original">${formatPrice(product.price / (1 - product.discount / 100))}</span>
+                            <span className="product-card-price">${formatPrice(product.price)}</span>
+                        </>
+                    ) : (
+                        <span className="product-card-price" style={{ color: 'var(--text-primary)' }}>
+                            ${formatPrice(product.price)}
+                        </span>
+                    )}
+                </div>
+
+                <div className="product-card-tax">
+                    ${formatPrice(product.price / 1.21)} Precio sin impuestos
                 </div>
 
                 <div className="product-card-options" style={{ marginBottom: '10px' }}>
@@ -98,23 +132,6 @@ export default function ProductCard({ product }) {
                                 >
                                     {size}
                                 </span>
-                            ))}
-                        </div>
-                    )}
-
-                    {product.colors?.length > 0 && (
-                        <div className="product-card-colors" style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                            {product.colors.map(color => (
-                                <span
-                                    key={color}
-                                    style={{
-                                        width: '18px', height: '18px', borderRadius: '50%',
-                                        background: color, border: selectedColor === color ? '2px solid var(--accent)' : '1px solid #ddd',
-                                        cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                                    }}
-                                    onClick={() => setSelectedColor(color)}
-                                    title={color}
-                                />
                             ))}
                         </div>
                     )}

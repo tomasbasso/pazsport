@@ -88,7 +88,7 @@ async function getById(req, res) {
 // POST /api/products
 async function create(req, res) {
     try {
-        const { name, description, price, categoryId, sizes, colors, stock, isActive } = req.body;
+        const { name, description, price, categoryId, sizes, colors, stock, isActive, discount } = req.body;
 
         if (!name || !price || !categoryId) {
             return res.status(400).json({ error: 'Nombre, precio y categoría son requeridos' });
@@ -101,8 +101,8 @@ async function create(req, res) {
         const colorsJson = Array.isArray(colors) ? JSON.stringify(colors) : colors || '[]';
 
         const insertQuery = `
-            INSERT INTO "Products" (name, description, price, image, images, "categoryId", sizes, colors, stock, "isActive")
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+            INSERT INTO "Products" (name, description, price, image, images, "categoryId", sizes, colors, stock, "isActive", discount)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
             RETURNING *
         `;
         const insertValues = [
@@ -115,7 +115,8 @@ async function create(req, res) {
             sizesJson,
             colorsJson,
             stock || 0,
-            isActive !== undefined ? isActive : true
+            isActive !== undefined ? isActive : true,
+            discount || 0
         ];
 
         const result = await db.query(insertQuery, insertValues);
@@ -151,7 +152,7 @@ async function create(req, res) {
 // PUT /api/products/:id
 async function update(req, res) {
     try {
-        const { name, description, price, categoryId, sizes, colors, stock, isActive, existingImages } = req.body;
+        const { name, description, price, categoryId, sizes, colors, stock, isActive, existingImages, discount } = req.body;
 
         let query = 'UPDATE "Products" SET "updatedAt" = NOW()';
         const params = [req.params.id]; // $1 es el ID
@@ -190,6 +191,10 @@ async function update(req, res) {
         if (isActive !== undefined) {
             query += `, "isActive" = $${paramIndex++}`;
             params.push(isActive);
+        }
+        if (discount !== undefined) {
+            query += `, discount = $${paramIndex++}`;
+            params.push(discount);
         }
 
         // --- MANEJO DE IMÁGENES MÚLTIPLES ---
