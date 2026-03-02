@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { FiPlus, FiEdit2, FiTrash2, FiX } from 'react-icons/fi';
 import { productsAPI, categoriesAPI } from '../services/api';
+import { formatPrice } from '../utils/formatters';
 
 const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3001';
 
@@ -121,7 +122,7 @@ export default function AdminProducts() {
                                 </td>
                                 <td><strong>{p.name}</strong></td>
                                 <td>{p.categoryName || '-'}</td>
-                                <td>${p.price?.toLocaleString('es-AR')}</td>
+                                <td>${formatPrice(p.price)}</td>
                                 <td>{p.sizes?.join(', ') || '-'}</td>
                                 <td>{p.stock}</td>
                                 <td>

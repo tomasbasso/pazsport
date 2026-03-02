@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback } from 'react';
-
+import { formatPrice } from '../utils/formatters';
 const CartContext = createContext();
 
 export function CartProvider({ children }) {
@@ -81,17 +81,17 @@ export function CartProvider({ children }) {
 
         items.forEach((item, index) => {
             const colorText = item.color ? ` - Color: ${item.color}` : '';
-            message += `${index + 1}. ${item.product.name} - Talle ${item.size}${colorText} x${item.quantity} - $${(item.product.price * item.quantity).toLocaleString('es-AR')}\n`;
+            message += `${index + 1}. ${item.product.name} - Talle ${item.size}${colorText} x${item.quantity} - $${formatPrice(item.product.price * item.quantity)}\n`;
         });
 
         if (shippingCost > 0) {
-            message += `\nEnvío: $${shippingCost.toLocaleString('es-AR')}\n`;
+            message += `\nEnvío: $${formatPrice(shippingCost)}\n`;
         } else if (zipCode === '6313') {
             message += `\nRetiro en Local / Winifreda (Gratis)\n`;
         }
 
         const finalTotal = totalPrice + shippingCost;
-        message += `\n*Total Final: $${finalTotal.toLocaleString('es-AR')}*\n\n`;
+        message += `\n*Total Final: $${formatPrice(finalTotal)}*\n\n`;
 
         message += '*Datos de Pago:*\n';
         message += 'Banco: Mercado Pago\n';

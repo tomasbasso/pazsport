@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { FiPlus } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { formatPrice } from '../utils/formatters';
 
 const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3001';
 
@@ -43,7 +44,7 @@ export default function ProductCard({ product }) {
                 <h3 className="product-card-name">{product.name}</h3>
                 <p className="product-card-desc">{product.description || 'Indumentaria deportiva premium'}</p>
                 <div className="product-card-price">
-                    ${product.price?.toLocaleString('es-AR')}
+                    ${formatPrice(product.price)}
                 </div>
 
                 <div className="product-card-options" style={{ marginBottom: '10px' }}>

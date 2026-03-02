@@ -2,6 +2,7 @@ import { useCart } from '../context/CartContext';
 import { FiArrowLeft, FiMinus, FiPlus, FiTrash2 } from 'react-icons/fi';
 import { FaWhatsapp } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
+import { formatPrice } from '../utils/formatters';
 
 const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3001';
 
@@ -62,7 +63,7 @@ export default function Checkout() {
                                         <div className={`shipping-badge ${shippingCost === 0 ? 'free' : ''}`}>
                                             {shippingCost === 0
                                                 ? (zipCode === '6313' ? 'Envío Gratis (Winifreda)' : 'Consultar')
-                                                : `$${shippingCost.toLocaleString('es-AR')}`}
+                                                : `$${formatPrice(shippingCost)}`}
                                         </div>
                                     )}
                                 </div>
@@ -147,7 +148,7 @@ export default function Checkout() {
                                             </div>
                                         </div>
                                         <div className="summary-item-price">
-                                            ${(item.product.price * item.quantity).toLocaleString('es-AR')}
+                                            ${formatPrice(item.product.price * item.quantity)}
                                         </div>
                                     </div>
                                 ))}
@@ -156,17 +157,17 @@ export default function Checkout() {
                             <div className="summary-totals">
                                 <div className="total-row">
                                     <span>Subtotal</span>
-                                    <span>${totalPrice.toLocaleString('es-AR')}</span>
+                                    <span>${formatPrice(totalPrice)}</span>
                                 </div>
                                 {shippingCost > 0 && (
                                     <div className="total-row">
                                         <span>Envío</span>
-                                        <span>${shippingCost.toLocaleString('es-AR')}</span>
+                                        <span>${formatPrice(shippingCost)}</span>
                                     </div>
                                 )}
                                 <div className="total-row main-total">
                                     <span>Total</span>
-                                    <span>${(totalPrice + shippingCost).toLocaleString('es-AR')}</span>
+                                    <span>${formatPrice(totalPrice + shippingCost)}</span>
                                 </div>
                             </div>
 

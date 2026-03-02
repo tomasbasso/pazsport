@@ -6,6 +6,7 @@ import { productsAPI } from '../services/api';
 import { useCart } from '../context/CartContext';
 import SEO from '../components/SEO';
 import Footer from '../components/Footer';
+import { formatPrice } from '../utils/formatters';
 
 const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3001';
 
@@ -81,7 +82,7 @@ export default function ProductDetail() {
 
                         <div className="product-detail-info">
                             <h1 className="product-title">{product.name}</h1>
-                            <div className="product-price">${product.price?.toLocaleString('es-AR')}</div>
+                            <div className="product-price">${formatPrice(product.price)}</div>
 
                             <p className="product-description">
                                 {product.description || 'Indumentaria deportiva premium diseñada para el máximo rendimiento y confort.'}
@@ -155,7 +156,7 @@ export default function ProductDetail() {
                         </div>
                     </div>
                 </div>
-            </div>
+            </div >
             <Footer />
 
             <style>{`
